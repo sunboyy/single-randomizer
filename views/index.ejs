@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>New Year 2018</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.6/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular.min.js"></script>
+    <style>
+        body {
+            color: #fff;
+            background-color: #000;
+            font-family: 'Thai sans lite';
+        }
+
+        .card {
+            color: #000;
+        }
+
+        .text-black {
+            color: #000;
+        }
+
+        .card-body {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body ng-app="newyear2018" ng-controller="viewer">
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-3" ng-repeat="i in game.players">
+                <div class="card" style="margin-top:20px;" ng-class="{'bg-primary text-white':game.currentPlayerId==i.id}">
+                    <img class="card-img-top" src="/img/player/{{i.id}}.jpg">
+                    <div class="card-body">
+                        <h4 class="card-title" align="center" style="margin:0px;">{{i.name}}</h4>
+                        <p align="center" style="margin:5px;">
+                            <img src="/img/{{i.isTaken?'yes':'no'}}.png" height="48">
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        let socket = io();
+        let app = angular.module('newyear2018', []);
+        app.controller('viewer', function ($scope, $http) {
+            $scope.game = {
+                players: [],
+                currentPlayerId: null
+            };
+            $scope.getPlayer = (id => {
+                let filteredPlayers = $scope.game.players.filter(player => player.id == id);
+                if (filteredPlayers.length == 0) return null;
+                return filteredPlayers[0];
+            });
+            $scope.getCurrentPlayer = (() => {
+                if ($scope.game.currentPlayerId == null) return null;
+                return $scope.getPlayer($scope.game.currentPlayerId);
+            });
+            $scope.getClosedPlayer = (() => {
+                if ($scope.game.closedPlayerId == null) return null;
+                return $scope.getPlayer($scope.game.closedPlayerId);
+            });
+            $scope.randomPlayer = (() => {
+                let filteredPlayers = $scope.game.players.filter(player => !player.isTaken && ($scope.currentPlayerId == null || player.id != $scope.game.currentPlayerId));
+                let randomPlayer = filteredPlayers[Math.floor(Math.random() * filteredPlayers.length)];
+                return randomPlayer;
+            });
+            $scope.update = (() => {
+                $http.get('/api/view').then(response => {
+                    $scope.game = response.data;
+                });
+            });
+            $scope.canSwap = (id => {
+                return $scope.game.swappedPlayers.filter(player => player == id).length == 0 && $scope.game.players.filter(player => player.id == id && player.isTaken).length == 1;
+            });
+            $scope.update();
+            $scope.nextAnimation = (time => {
+                return function () {
+                    if (time < 500) {
+                        $scope.game.currentPlayerId = $scope.randomPlayer().id;
+                        $scope.$apply();
+                        setTimeout($scope.nextAnimation(time * 1.1), time);
+                    }
+                    else {
+                        $scope.update();
+                        $scope.$apply();
+                    }
+                }
+            });
+            socket.on('update', type => {
+                if (type == 'next') {
+                    let closedPlayer = $scope.game.players.filter(player => player.isTaken && !player.isBoxOpened);
+                    if (closedPlayer.length != 0) {
+                        $scope.game.closedPlayerId = closedPlayer[0].id;
+                    }
+                    else {
+                        $scope.game.closedPlayerId = null;
+                    }
+                    $scope.swappedPlayers = [];
+                    $scope.nextAnimation(20)();
+                }
+                else {
+                    $scope.update();
+                    $scope.$apply();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

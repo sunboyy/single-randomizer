@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>New Year 2018</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.6/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.7/angular.min.js"></script>
+    <style>
+        body {
+            background-color: #000;
+            font-family: 'Thai sans lite';
+        }
+
+        .card {
+            color: #000;
+        }
+
+        .text-black {
+            color: #000;
+        }
+
+        .card-body {
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body ng-app="newyear2018" ng-controller="viewer">
+    <div style="position:fixed;top:0px;left:0px;width:100%;padding:10px;background-color:rgba(0,0,0,.6);">
+        <button class="btn btn-block btn-primary" ng-click="next()">Next</button>
+    </div>
+    <table class="table table-striped table-dark" style="margin-top:60px;">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Gift</th>
+                <th>Open</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="i in game.players" ng-class="{'table-primary text-black':i.id==game.currentPlayerId,'table-warning text-black':i.id==game.closedPlayerId}">
+                <td>{{i.name}}</td>
+                <td>
+                    <img src="/img/{{i.isTaken?'yes':'no'}}.png" width="24" ng-show="i.isTaken">
+                </td>
+                <td>
+                    <button class="btn btn-success" ng-show="i.isTaken&&!i.isBoxOpened" ng-click="open(i.id)">Open</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="container">
+        <button class="btn btn-block btn-danger" ng-click="restart()">Restart</button>
+    </div>
+    <script>
+        let socket = io();
+        let app = angular.module('newyear2018', []);
+        app.controller('viewer', function ($scope, $http) {
+            $scope.game = {
+                players: [],
+                currentPlayerId: null,
+            };
+            $scope.getPlayer = (id => {
+                let filteredPlayers = $scope.game.players.filter(player => player.id == id);
+                if (filteredPlayers.length == 0) return null;
+                return filteredPlayers[0];
+            });
+            $scope.getCurrentPlayer = (() => {
+                if ($scope.game.currentPlayerId == null) return null;
+                return $scope.getPlayer($scope.game.currentPlayerId);
+            });
+            $scope.update = (() => {
+                $http.get('/api/view').then(response => {
+                    $scope.game = response.data;
+                });
+            });
+            $scope.canSwap = (id => {
+                return $scope.game.swappedPlayers.filter(player => player == id).length == 0 && $scope.game.players.filter(player => player.id == id && player.isTaken).length == 1;
+            });
+            $scope.update();
+            socket.on('update', () => {
+                $scope.update();
+                $scope.$apply();
+            });
+            $scope.next = (() => {
+                socket.emit('next');
+            });
+            $scope.restart = (() => {
+                socket.emit('restart');
+            });
+        });
+    </script>
+</body>
+
+</html>

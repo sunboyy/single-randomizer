@@ -1,0 +1,25 @@
+{
+  "name": "newyearceremony2018",
+  "version": "1.0.0",
+  "description": "New Year 2018 Ceremony",
+  "main": "app.js",
+  "scripts": {
+    "test": "node app"
+  },
+  "keywords": [
+    "New",
+    "Year",
+    "2018",
+    "Ceremony"
+  ],
+  "author": "Surawich Laprattanatrai",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.2",
+    "ejs": "^2.5.7",
+    "express": "^4.16.2",
+    "mongodb": "^3.0.1",
+    "readline-sync": "^1.4.7",
+    "socket.io": "^2.0.4"
+  }
+}

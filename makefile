@@ -1,0 +1,2 @@
+default:
+	tsc model.ts
