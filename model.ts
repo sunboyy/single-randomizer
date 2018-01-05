@@ -1,11 +1,3 @@
-export class Status {
-    public title: string;
-    public data: any;
-    constructor(title: string, data: object | string) {
-        this.title = title;
-        this.data = data;
-    }
-}
 export class Player {
     public id;
     public name: string;
