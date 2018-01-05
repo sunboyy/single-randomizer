@@ -41,11 +41,7 @@ io.on('connection', socket => {
         if (status) io.emit('update', 'next');
     });
     socket.on('restart', id => {
-        game.players.forEach(player => {
-            player.isBoxOpened = false;
-            player.isTaken = false;
-        });
-        game.currentPlayerId = null;
-        io.emit('update', '');
+        game.restart();
+        io.emit('update', 'restart');
     })
 });

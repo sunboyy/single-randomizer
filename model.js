@@ -12,7 +12,6 @@ var Player = /** @class */ (function () {
     function Player(id, name) {
         this.id = id;
         this.name = name;
-        this.isTaken = false;
     }
     return Player;
 }());
@@ -20,10 +19,12 @@ exports.Player = Player;
 var Game = /** @class */ (function () {
     function Game() {
         this.players = [];
+        this.remainingPlayerIds = [];
         this.currentPlayerId = null;
     }
     Game.prototype.addPlayer = function (player) {
         this.players.push(player);
+        this.remainingPlayerIds.push(player.id);
     };
     Game.prototype.getPlayer = function (id) {
         var filterPlayers = this.players.filter(function (player) { return player.id == id; });
@@ -37,19 +38,25 @@ var Game = /** @class */ (function () {
         return this.getPlayer(this.currentPlayerId);
     };
     Game.prototype.getRandomRemainingPlayer = function () {
-        var remainingPlayers = this.players.filter(function (player) { return !player.isTaken; });
-        if (remainingPlayers.length == 0)
+        if (this.remainingPlayerIds.length == 0)
             return null;
-        var randomPlayer = remainingPlayers[Math.floor(Math.random() * remainingPlayers.length)];
-        randomPlayer.isTaken = true;
-        return randomPlayer;
+        var newPlayerIndex = Math.floor(Math.random() * this.remainingPlayerIds.length);
+        var newPlayerId = this.remainingPlayerIds[newPlayerIndex];
+        this.remainingPlayerIds.splice(newPlayerIndex, 1);
+        return this.getPlayer(newPlayerId);
     };
     Game.prototype.next = function () {
         var randomPlayer = this.getRandomRemainingPlayer();
         this.currentPlayerId = randomPlayer ? randomPlayer.id : null;
-        this.swappedPlayers = [this.currentPlayerId];
-        this.shouldSwap = (this.currentPlayerId != null);
         return true;
+    };
+    Game.prototype.restart = function () {
+        var _this = this;
+        this.currentPlayerId = null;
+        this.remainingPlayerIds = [];
+        this.players.forEach(function (player) {
+            _this.remainingPlayerIds.push(player.id);
+        });
     };
     return Game;
 }());

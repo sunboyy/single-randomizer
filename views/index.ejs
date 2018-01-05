@@ -41,7 +41,7 @@
                     <div class="card-body">
                         <h4 class="card-title" align="center" style="margin:0px;">{{i.name}}</h4>
                         <p align="center" style="margin:5px;">
-                            <img src="/img/{{i.isTaken?'yes':'no'}}.png" height="48">
+                            <img src="/img/{{isSelected(i.id)?'yes':'no'}}.png" height="48">
                         </p>
                     </div>
                 </div>
@@ -54,6 +54,7 @@
         app.controller('viewer', function ($scope, $http) {
             $scope.game = {
                 players: [],
+                remainingPlayerIds: [],
                 currentPlayerId: null
             };
             $scope.getPlayer = (id => {
@@ -65,22 +66,22 @@
                 if ($scope.game.currentPlayerId == null) return null;
                 return $scope.getPlayer($scope.game.currentPlayerId);
             });
-            $scope.getClosedPlayer = (() => {
-                if ($scope.game.closedPlayerId == null) return null;
-                return $scope.getPlayer($scope.game.closedPlayerId);
-            });
             $scope.randomPlayer = (() => {
-                let filteredPlayers = $scope.game.players.filter(player => !player.isTaken && ($scope.currentPlayerId == null || player.id != $scope.game.currentPlayerId));
-                let randomPlayer = filteredPlayers[Math.floor(Math.random() * filteredPlayers.length)];
-                return randomPlayer;
+                let newPlayerId = $scope.game.remainingPlayerIds[Math.floor(Math.random() * $scope.game.remainingPlayerIds.length)];
+                return $scope.getPlayer(newPlayerId);
+            });
+            $scope.isSelected = (id => {
+                if ($scope.game.remainingPlayerIds.indexOf(id) != -1) {
+                    return false;
+                }
+                else {
+                    return true;
+                }
             });
             $scope.update = (() => {
                 $http.get('/api/view').then(response => {
                     $scope.game = response.data;
                 });
-            });
-            $scope.canSwap = (id => {
-                return $scope.game.swappedPlayers.filter(player => player == id).length == 0 && $scope.game.players.filter(player => player.id == id && player.isTaken).length == 1;
             });
             $scope.update();
             $scope.nextAnimation = (time => {
@@ -98,14 +99,6 @@
             });
             socket.on('update', type => {
                 if (type == 'next') {
-                    let closedPlayer = $scope.game.players.filter(player => player.isTaken && !player.isBoxOpened);
-                    if (closedPlayer.length != 0) {
-                        $scope.game.closedPlayerId = closedPlayer[0].id;
-                    }
-                    else {
-                        $scope.game.closedPlayerId = null;
-                    }
-                    $scope.swappedPlayers = [];
                     $scope.nextAnimation(20)();
                 }
                 else {

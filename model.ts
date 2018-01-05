@@ -9,24 +9,23 @@ export class Status {
 export class Player {
     public id;
     public name: string;
-    public isTaken: boolean;
     constructor(id, name: string) {
         this.id = id;
         this.name = name;
-        this.isTaken = false;
     }
 }
 export class Game {
     public players: Player[];
-    public swappedPlayers: string[];
+    public remainingPlayerIds: string[];
     public currentPlayerId: string;
-    public shouldSwap: boolean;
     constructor() {
         this.players = [];
+        this.remainingPlayerIds = [];
         this.currentPlayerId = null;
     }
-    addPlayer(player) {
+    addPlayer(player: Player) {
         this.players.push(player);
+        this.remainingPlayerIds.push(player.id);
     }
     getPlayer(id: string): Player {
         let filterPlayers = this.players.filter(player => player.id == id);
@@ -38,17 +37,22 @@ export class Game {
         return this.getPlayer(this.currentPlayerId);
     }
     getRandomRemainingPlayer(): Player {
-        let remainingPlayers = this.players.filter(player => !player.isTaken);
-        if (remainingPlayers.length == 0) return null;
-        let randomPlayer = remainingPlayers[Math.floor(Math.random() * remainingPlayers.length)];
-        randomPlayer.isTaken = true;
-        return randomPlayer;
+        if (this.remainingPlayerIds.length == 0) return null;
+        let newPlayerIndex = Math.floor(Math.random() * this.remainingPlayerIds.length);
+        let newPlayerId = this.remainingPlayerIds[newPlayerIndex];
+        this.remainingPlayerIds.splice(newPlayerIndex, 1);
+        return this.getPlayer(newPlayerId);
     }
     next(): boolean {
         let randomPlayer = this.getRandomRemainingPlayer();
         this.currentPlayerId = randomPlayer ? randomPlayer.id : null;
-        this.swappedPlayers = [this.currentPlayerId];
-        this.shouldSwap = (this.currentPlayerId != null);
         return true;
+    }
+    restart() {
+        this.currentPlayerId = null;
+        this.remainingPlayerIds = [];
+        this.players.forEach(player => {
+            this.remainingPlayerIds.push(player.id);
+        });
     }
 }

@@ -39,18 +39,14 @@
         <thead>
             <tr>
                 <th>Name</th>
-                <th>Gift</th>
-                <th>Open</th>
+                <th>Selected</th>
             </tr>
         </thead>
         <tbody>
             <tr ng-repeat="i in game.players" ng-class="{'table-primary text-black':i.id==game.currentPlayerId,'table-warning text-black':i.id==game.closedPlayerId}">
                 <td>{{i.name}}</td>
                 <td>
-                    <img src="/img/{{i.isTaken?'yes':'no'}}.png" width="24" ng-show="i.isTaken">
-                </td>
-                <td>
-                    <button class="btn btn-success" ng-show="i.isTaken&&!i.isBoxOpened" ng-click="open(i.id)">Open</button>
+                    <img src="/img/{{isSelected(i.id)?'yes':'no'}}.png" width="24">
                 </td>
             </tr>
         </tbody>
@@ -64,6 +60,7 @@
         app.controller('viewer', function ($scope, $http) {
             $scope.game = {
                 players: [],
+                remainingPlayerIds: [],
                 currentPlayerId: null,
             };
             $scope.getPlayer = (id => {
@@ -75,13 +72,18 @@
                 if ($scope.game.currentPlayerId == null) return null;
                 return $scope.getPlayer($scope.game.currentPlayerId);
             });
+            $scope.isSelected = (id => {
+                if ($scope.game.remainingPlayerIds.indexOf(id) != -1) {
+                    return false;
+                }
+                else {
+                    return true;
+                }
+            });
             $scope.update = (() => {
                 $http.get('/api/view').then(response => {
                     $scope.game = response.data;
                 });
-            });
-            $scope.canSwap = (id => {
-                return $scope.game.swappedPlayers.filter(player => player == id).length == 0 && $scope.game.players.filter(player => player.id == id && player.isTaken).length == 1;
             });
             $scope.update();
             socket.on('update', () => {
