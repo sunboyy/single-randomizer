@@ -67,16 +67,16 @@
                 return $scope.getPlayer($scope.game.currentPlayerId);
             });
             $scope.randomPlayer = (() => {
-                let newPlayerId = $scope.game.remainingPlayerIds[Math.floor(Math.random() * $scope.game.remainingPlayerIds.length)];
-                return $scope.getPlayer(newPlayerId);
+                while (true) {
+                    let newPlayerId = $scope.game.remainingPlayerIds[Math.floor(Math.random() * $scope.game.remainingPlayerIds.length)];
+                    if (newPlayerId != $scope.game.currentPlayerId || $scope.game.remainingPlayerIds.length <= 1) {
+                        return $scope.getPlayer(newPlayerId);
+                    }
+                }
             });
             $scope.isSelected = (id => {
-                if ($scope.game.remainingPlayerIds.indexOf(id) != -1) {
-                    return false;
-                }
-                else {
-                    return true;
-                }
+                if ($scope.game.remainingPlayerIds.indexOf(id) == -1) return true;
+                return false;
             });
             $scope.update = (() => {
                 $http.get('/api/view').then(response => {
