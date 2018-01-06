@@ -99,7 +99,13 @@
             });
             socket.on('update', type => {
                 if (type == 'next') {
-                    $scope.nextAnimation(20)();
+                    if ($scope.game.remainingPlayerIds.length > 1) {
+                        $scope.nextAnimation(20)();
+                    }
+                    else {
+                        $scope.update();
+                        $scope.$apply();
+                    }
                 }
                 else {
                     $scope.update();
