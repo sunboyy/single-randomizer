@@ -1,3 +1,4 @@
+import { players } from './config';
 import { Player } from './player';
 
 export class Game {
@@ -35,9 +36,12 @@ export class Game {
     }
     restart() {
         this.currentPlayerId = undefined;
-        this.remainingPlayerIds = [];
-        this.players.forEach(player => {
-            this.remainingPlayerIds.push(player.id);
-        });
+        this.remainingPlayerIds = this.players.map(player => player.id);
     }
 }
+
+export const game = new Game();
+
+players.forEach(player => {
+    game.addPlayer(new Player(player.id, player.name));
+});

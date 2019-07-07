@@ -1,16 +1,10 @@
 import bodyParser from 'body-parser';
 import express from 'express';
+import { Server } from 'http';
 import { join } from 'path';
-import socketIo from 'socket.io';
 import { port } from './config';
-import { Game } from './game';
-import { Player } from './player';
-import players from './players';
-
-const game = new Game();
-players.forEach(player => {
-    game.addPlayer(new Player(player.id, player.name));
-});
+import { game } from './game';
+import { initSocket } from './socket';
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -32,19 +26,9 @@ app.get('/api/view', (req, res) => {
     res.json(game);
 });
 
-const server = app.listen(port, () => {
-    console.log('Listening to port ' + port);
-});
+const server = new Server(app);
+initSocket(server);
 
-const io = socketIo(server);
-io.on('connection', socket => {
-    console.log((io.engine as any).clientsCount + ' clients connected');
-    socket.on('next', () => {
-        const status = game.next();
-        if (status) { io.emit('update', 'next'); }
-    });
-    socket.on('restart', id => {
-        game.restart();
-        io.emit('update', 'restart');
-    });
+server.listen(port, () => {
+    console.log('Listening to port ' + port);
 });
